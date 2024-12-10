@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .main-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .main-title {
+            text-align: center;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .input-group button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
+        .user-table {
+            margin-top: 20px;
+        }
+        .user-table table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .user-table table, th, td {
+            border: 1px solid #ddd;
+        }
+        .user-table th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .user-table th {
+            background-color: #007bff;
+            color: white;
+        }
+        .user-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h2 class="main-title">Управление пользователями</h2>
+
+        <div class="input-group">
+            <label for="create-username">Имя пользователя</label>
+            <input type="text" id="create-username" name="create-username" required>
+        </div>
+        <div class="input-group">
+            <label for="create-email">Email</label>
+            <input type="email" id="create-email" name="create-email" required>
+        </div>
+        <div class="input-group">
+            <label for="create-fullname">Полное имя</label>
+            <input type="text" id="create-fullname" name="create-fullname" required>
+        </div>
+        <div class="input-group">
+            <label for="create-password">Пароль</label>
+            <input type="password" id="create-password" name="create-password" required>
+        </div>
+        <div class="input-group">
+            <button type="button" onclick="createUser()">Создать пользователя</button>
+        </div>
+
+        <div class="input-group">
+            <label for="update-userid">ID пользователя для обновления</label>
+            <select id="update-userid" name="update-userid" required>
+                <option value="">Выберите ID пользователя</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="update-email">Новый Email</label>
+            <input type="email" id="update-email" name="update-email" required>
+        </div>
+        <div class="input-group">
+            <label for="update-fullname">Новое полное имя</label>
+            <input type="text" id="update-fullname" name="update-fullname" required>
+        </div>
+        <div class="input-group">
+            <label for="update-password">Новый пароль</label>
+            <input type="password" id="update-password" name="update-password" required>
+        </div>
+        <div class="input-group">
+            <button type="button" onclick="updateUser()">Обновить пользователя</button>
+        </div>
+
+        <div class="input-group">
+            <label for="delete-userid">ID пользователя для удаления</label>
+            <select id="delete-userid" name="delete-userid" required>
+                <option value="">Выберите ID пользователя</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <button type="button" onclick="deleteUser()">Удалить пользователя</button>
+        </div>
+
+        <div class="user-table">
+            <h3>Пользователи</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя пользователя</th>
+                        <th>Email</th>
+                        <th>Полное имя</th>
+                        <th>Отключен</th>
+                    </tr>
+                </thead>
+                <tbody id="user-list-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+    async function fetchUsers() {
+        try {
+            const response = await fetch('/users/');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const users = await response.json();
+            const userListBody = document.getElementById('user-list-body');
+            userListBody.innerHTML = '';
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${user.full_name || ''}</td>
+                    <td>${user.disabled ? 'Да' : 'Нет'}</td>
+                `;
+                userListBody.appendChild(row);
+            });
+
+            const updateUserSelect = document.getElementById('update-userid');
+            const deleteUserSelect = document.getElementById('delete-userid');
+            updateUserSelect.innerHTML = '<option value="">Выберите ID пользователя</option>';
+            deleteUserSelect.innerHTML = '<option value="">Выберите ID пользователя</option>';
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.text = user.id;
+                updateUserSelect.appendChild(option.cloneNode(true));
+                deleteUserSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Failed to fetch users:', error);
+        }
+    }
+
+    async function createUser() {
+        const username = document.getElementById('create-username').value;
+        const email = document.getElementById('create-email').value;
+        const fullName = document.getElementById('create-fullname').value;
+        const password = document.getElementById('create-password').value;
+
+        try {
+            const response = await fetch('/users/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, email, full_name: fullName, password })
+            });
+
+            if (response.ok) {
+                fetchUsers();
+            } else {
+                console.error('Failed to create user:', await response.text());
+                alert('Failed to create user');
+            }
+        } catch (error) {
+            console.error('Error during user creation:', error);
+            alert('Failed to create user');
+        }
+    }
+
+    async function updateUser() {
+        const userId = document.getElementById('update-userid').value;
+        const email = document.getElementById('update-email').value;
+        const fullName = document.getElementById('update-fullname').value;
+        const password = document.getElementById('update-password').value;
+
+        try {
+            const response = await fetch(`/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, full_name: fullName, password })
+            });
+
+            if (response.ok) {
+                fetchUsers();
+            } else {
+                console.error('Failed to update user:', await response.text());
+                alert('Failed to update user');
+            }
+        } catch (error) {
+            console.error('Error during user update:', error);
+            alert('Failed to update user');
+        }
+    }
+
+    async function deleteUser() {
+        const userId = document.getElementById('delete-userid').value;
+
+        try {
+            const response = await fetch(`/users/${userId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                fetchUsers();
+            } else {
+                console.error('Failed to delete user:', await response.text());
+                alert('Failed to delete user');
+            }
+        } catch (error) {
+            console.error('Error during user deletion:', error);
+            alert('Failed to delete user');
+        }
+    }
+
+    fetchUsers();
+    </script>
+</body>
+</html>
